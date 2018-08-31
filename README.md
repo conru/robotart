@@ -8,7 +8,7 @@ All the commands to control the bot can be found in python/bot/bot_demo.py.  Her
 mybot = Bot()
 
 # basic moving commands
-mybot.go_to_xyz([x, y, z]) # tell bot to go to x,y,z
+mybot.go_to_xyz([x, y, z]) # tell bot to go to x,y,z (in cm)
 mybot.go_to_xy([x, y]) # move to x, y (z = constant)
 mybot.go_to_z(z)
 mybot.go_up() # move to highest z location
@@ -19,7 +19,7 @@ mybot.setCanvasDimensions([40, 30]) # cm of canvas in x and y direction
 
 # tell the bot what color pen is being simulated
 mybot.setPenRadius(0.8) # cm
-mybot.setPenColor([20,20,250]) # b, g, r
+mybot.setPenColor([20,20,250]) # b, g, r (dark red)
 
 # tell drawing simulation to start/stop drawing
 mybot.simulatePenDown() # start drawing
@@ -37,7 +37,7 @@ mybot.setHostPort("localhost",9999) # only if bot is on a different computer
 
 ## Running the demo examples ##
 
-You can simulate how the bot will work before sending commands to the physical bot.  There are two ways to do it.
+You can simulate how the bot will work before sending commands to the physical bot.  There are two ways to do it.  NOTE: must install python3, numpy, and and opencv first.
 
 ## 1. Direct commands to the simulation ##
 
@@ -61,7 +61,7 @@ cd python/bot
 python3 bot_server.py
 ```
 
-It will open a window that shows a simulation of the bot (so you can see it without having to have a physical bot)
+It will open a window that shows a simulation of the bot (so you can see it without having to have a physical bot).
 
 Then, you can send commands to it just like in the simulation.  To see a demo, just edit the line in bot_demo.py of
 
