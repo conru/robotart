@@ -31,7 +31,8 @@ mybot.setPenColor([20,20,250]) # b, g, r (dark red)
 mybot.simulatePenDown() # start drawing
 mybot.simulatePenUp() # stop drawing
 
-mybot.setHostPort("localhost",9999) # only if bot is on a different computer
+# use to access a bot connected to a different computer
+mybot.setHostPort("localhost",9999) 
 
 ```
 
