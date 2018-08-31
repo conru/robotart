@@ -4,16 +4,18 @@ The goal of this code is to help simplify the testing and sending of commands to
 
 You can simulate how the bot will work before sending commands to the physical bot.  There are two ways to do it.
 
-## Direct commands to the simulation ##
+## 1. Direct commands to the simulation ##
 
 At the command line, just run:
 
+```
 cd python/bot
 python3 bot_demo.py
+```
 
 This demo will create a bot object, open the simluation of the bot and it's drawing/painting, and simulate the drawing.  The drawing itself is just the contour lines of a sample image.
 
-## Send commands to a socket server ##
+## 2. Send commands to a socket server ##
 
 This is useful if you're writing code in another language than python or want to run the bot on a different computer than the one with your scripts.  
 
@@ -49,10 +51,10 @@ The bot_demo.py script will run the same but now send the commands to the bot se
 
 ## Example screenshots of the bot simulator ##
 
-Simulation of the bot.
+Simulation of the bot.<br>
 ![images/bot_sim.png](images/bot_sim.png)
 
-Simulated drawing by the bot.
+Simulated drawing by the bot.<br>
 ![images/bot_draw.png](images/bot_draw.png)
 
 ## C++ bot client ##
