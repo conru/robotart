@@ -1,6 +1,6 @@
-The goal of this code is to help simplify the testing and sending of commands to the painting robot available at http://robotart.org
+The goal of this code is to help simplify the testing and sending of commands to the painting robot available at http://robotart.org.  You can use the code to simulate the bot as well as to send motion commands to the bot (using either python or c++).
 
-While the work on Windows, to download them on Mac, go to a terminal and type: git fetch http://github.com/conru/robotart.
+To download to code to a Mac/Ubuntu, go to a terminal and type: git fetch http://github.com/conru/robotart.  Note: the code will also work on Windows.
 
 ## Basic commands ##
 
