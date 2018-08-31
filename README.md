@@ -1,5 +1,40 @@
 The goal of this code is to help simplify the testing and sending of commands to the painting robot available at http://robotart.org
 
+## Basic commands ##
+
+All the commands to control the bot can be found in python/bot/bot_demo.py.  Here are some of the commands
+
+```
+mybot = Bot()
+
+# basic moving commands
+mybot.go_to_xyz([x, y, z]) # tell bot to go to x,y,z
+mybot.go_to_xy([x, y]) # move to x, y (z = constant)
+mybot.go_to_z(z)
+mybot.go_up() # move to highest z location
+
+# tell the bot where the canvas/paper is located
+mybot.setCanvasLocation([20, 5, .5]) # cm upper/left corner is (0,0,0)
+mybot.setCanvasDimensions([40, 30]) # cm of canvas in x and y direction
+
+# tell the bot what color pen is being simulated
+mybot.setPenRadius(0.8) # cm
+mybot.setPenColor([20,20,250]) # b, g, r
+
+# tell drawing simulation to start/stop drawing
+mybot.simulatePenDown() # start drawing
+mybot.simulatePenUp() # stop drawing
+
+mybot.setMaxSpeed(20) # cm/sec
+
+mybot.openDrawSimulation() # opens the drawing simulation (see screenshot below)
+mybot.openBotSimulation() # opens the bot simulation (see screenshot below)
+
+mybot.setHostPort("localhost",9999) # only if bot is on a different computer
+
+```
+
+
 ## Running the demo examples ##
 
 You can simulate how the bot will work before sending commands to the physical bot.  There are two ways to do it.
