@@ -20,21 +20,23 @@ class Bot:
         self.debug = debug
 
     def go_up(self):
-        self.go_to_xyz(-1, -1, self.z_max)
+        self.go_to_xyz(None, None, self.z_max)
 
     def go_to_z(self,z):
-        self.go_to_xyz(-1, -1, z)
+        self.go_to_xyz(None, None, z)
 
-    def go_to_xy(self, x=-1, y=-1):
+    def go_to_xy(self, x=None, y=None):
         if (isinstance(x,list)):
            gx = x[0]
            gy = x[1]
         else:
            gx = x
            gy = y
-        self.go_to_xyz(gx, gy, -1)
+        self.go_to_xyz(gx, gy, None)
 
-    def go_to_xyz(self, x=-1, y=-1 , z=-1):
+    def go_to_xyz(self, x=None, y=None, z=None):
+        # Qin: don't use -1, use None.
+
         if (isinstance(x,list)):
            gx = x[0]
            gy = x[1]
@@ -45,21 +47,36 @@ class Bot:
            gz = z
 
         orig_location = (self.x, self.y, self.z)
-        if self.is_number(gx) and gx != -1 and gx <= self.x_max : self.x = gx
-        if self.is_number(gy) and gy != -1 and gy <= self.y_max : self.y = gy
-        if self.is_number(gz) and gz != -1 and gz <= self.z_max : self.z = gz
+
+        # Qin: software limits are implemented in grbl firmware,
+        # no need to code.
+        # modified here to skip the unreasonable min/max limits.
+
+        # if self.is_number(gx) and gx != -1 and gx <= self.x_max : self.x = gx
+        # if self.is_number(gy) and gy != -1 and gy <= self.y_max : self.y = gy
+        # if self.is_number(gz) and gz != -1 and gz <= self.z_max : self.z = gz
+        if gx is not None: self.x = gx
+        if gy is not None: self.y = gy
+        if gz is not None: self.z = gz
 
         ########### TO DO ####################
-        self.doCommand("GO X{x:.2f} Y{y:.2f} Z{z:.2f}".format(x = self.x, y = self.y, z = self.z))
+        # the linear feed command is G1
+        self.doCommand("G1 X{x:.3f} Y{y:.3f} Z{z:.3f}".format(x = self.x, y = self.y, z = self.z))
 
         if self.simDraw and self.simPenDown:
            self.doSimulateDraw(orig_location, (self.x, self.y, self.z))
         if self.simBot:
            self.doSimulateBot(orig_location, (self.x, self.y, self.z))
 
-        if self.debug: 
+        if self.debug:
            print("Moving to ", end='')
            self.print()
+
+    def home(self):
+        self.doCommand('$H')
+
+    def setSpeed(self,s): # mm/min
+        self.doCommand('G1 F{:1.3f}'.format(s))
 
     def is_number(self, n):
         is_number = True
@@ -73,8 +90,18 @@ class Bot:
 
     ########### TO DO ####################
 
+    def startSerialPort(self):
+        # start a serial client that connects to a controller board running
+        # grbl v1.1 firmware.
+        from grbl import grbl
+        self.grbl = grbl()
+
     def sendCommandToBot(self, command, debug = False):
+        # via serial.
         if debug: print("SENDING",command,"TO BOT");
+        self.grbl.command_ok(command, timeout=10)
+        # send command and wait for ack
+
         return 1
 
     def processServerCommand(self, command, debug = False):
@@ -122,7 +149,7 @@ class Bot:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
-           sock.connect((HOST, PORT)) # connect to server 
+           sock.connect((HOST, PORT)) # connect to server
         except:
            return 0
         finally:
@@ -182,7 +209,7 @@ class Bot:
 
     def setCanvasLocation(self, canvas_location):
         self.canvasLocation = canvas_location
-        
+
     def setCanvasDimensions(self, canvas_dimensions):
         self.canvasDimensions = canvas_dimensions
 
@@ -238,7 +265,7 @@ class Bot:
            x = p[0]
            y = p[1]
            z = p[2]
-   
+
            if (self.simDraw):
               cw, ch = self.canvasDimensions
               cx, cy, cz = self.canvasLocation
@@ -248,79 +275,79 @@ class Bot:
               pt2 = self.rotateSim(off_x + scale * (rail_w + head_w + cx + cw), off_y + scale * (cy + ch))
               self.simBotWindow.setPenColor(self.canvasColor)
               self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # top
-   
+
               # transfer drawing onto bot simulation
               dw = int(self.simDrawWindow.width * scale / self.simDrawWindowScale)
               dh = int(self.simDrawWindow.height * scale / self.simDrawWindowScale)
               drawing_image = cv2.resize(self.simDrawWindow.getGrid(), (dw, dh));
               self.simBotWindow.grid[cpy:cpy+drawing_image.shape[0], cpx:cpx+drawing_image.shape[1]] = drawing_image
-   
+
               # draw canvas on side view
               cpx = int(off_x + scale * (rail_w + head_w + cx)) # pixels of corner of canvas
               cpy = int(floor_y - scale * cz) - 2
               pt1 = self.rotateSim(cpx, cpy)
               pt2 = self.rotateSim(off_x + scale * (rail_w + head_w + cx + cw), floor_y)
               self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # top
-   
-           # draw top view of bot		   
+
+           # draw top view of bot
            self.simBotWindow.setPenColor([180,180,180])
-   
+
            pt1 = self.rotateSim(off_x - scale * rail_w, off_y - scale * rail_w)
            pt2 = self.rotateSim(off_x + scale * (inside_x + rail_w), off_y + scale)
            self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # top
-   
+
            pt1 = self.rotateSim(off_x - scale * rail_w, off_y - scale * rail_w)
            pt2 = self.rotateSim(off_x, off_y + scale * (self.botDimensions[1] + rail_w))
            self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # left
-   
+
            pt1 = self.rotateSim(off_x + scale * inside_x, off_y - scale * rail_w)
            pt2 = self.rotateSim(off_x + scale * (inside_x + rail_w), off_y + scale * (self.botDimensions[1] + rail_w))
            self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # right
-   
+
            pt1 = self.rotateSim(off_x, off_y + scale * self.botDimensions[1])
            pt2 = self.rotateSim(off_x + scale * (inside_x + rail_w), off_y + scale * (self.botDimensions[1] + rail_w))
            self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # right
-   
+
            self.simBotWindow.setPenColor([210,210,210])
            pt1 = self.rotateSim(off_x + scale * x , off_y - scale * (rail_w + overhang))
            pt2 = self.rotateSim(off_x + scale * (x + rail_w), off_y + scale * (self.botDimensions[1] + rail_w + overhang))
            self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # bar
-   
+
            self.simBotWindow.setPenColor([230,230,230])
            pt1 = self.rotateSim(off_x + scale * x , off_y + scale * (y - head_h/2.))
            pt2 = self.rotateSim(off_x + scale * (head_w + x), off_y + scale * (y + head_h/2.))
            self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # head
-   
+
            self.simBotWindow.setPenColor(self.simulatePenColor)
            pt1 = self.rotateSim(off_x + scale * (head_w + pen_radius + x), off_y + scale * y)
            self.simBotWindow.drawCircle(pt1, int(scale * pen_radius), fill = True) # pen/brush
-   
-           # draw side view of bot		   
-   
+
+           # draw side view of bot
+
            self.simBotWindow.setPenColor([80,100,180])
            self.simBotWindow.drawRectangle2(0, floor_y, self.simBotWindow.width, self.simBotWindow.height, fill = True) # ground
-   
+
            self.simBotWindow.setPenColor([230,230,230])
            pt1 = self.rotateSim(off_x + scale * x , floor_y - scale * (rail_d + pen_d + head_d))
            pt2 = self.rotateSim(off_x + scale * (x + head_w), floor_y - scale * (z + pen_d))
            self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # head
-   
+
            self.simBotWindow.setPenColor(self.simulatePenColor)
            pt1 = self.rotateSim(off_x + scale * (x + head_w), floor_y - scale * (z + pen_total_d))
            pt2 = self.rotateSim(off_x + scale * (x + head_w + 2 * pen_radius), floor_y - scale * (z))
            self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # pen/brush
-   
+
            self.simBotWindow.setPenColor([180,180,180])
            pt1 = self.rotateSim(off_x - scale * rail_w, floor_y - scale * (floor_to_bottom + rail_d))
            pt2 = self.rotateSim(off_x + scale * (inside_x + rail_w), floor_y - scale * (floor_to_bottom))
            self.simBotWindow.setLineThickness(2)
            self.simBotWindow.drawRectangle(pt1, pt2, fill = False) # horizontal
-   
+
            self.simBotWindow.setPenColor([210,210,210])
            pt1 = self.rotateSim(off_x + scale * x , floor_y - scale * (floor_to_bottom + rail_d + rail_d))
            pt2 = self.rotateSim(off_x + scale * (x + rail_w), floor_y - scale * (floor_to_bottom + rail_d))
            self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # end bar
-   
+
            self.simBotWindow.setPenColor([80,60,80])
            pt1 = self.rotateSim(off_x - scale * rail_w, floor_y - scale * (floor_to_bottom))
            pt2 = self.rotateSim(off_x, floor_y)
@@ -328,7 +355,7 @@ class Bot:
            pt1 = self.rotateSim(off_x + scale * inside_x, floor_y - scale * (floor_to_bottom))
            pt2 = self.rotateSim(off_x + scale * (inside_x + rail_w), floor_y)
            self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # right foot
-   
+
            #pt1 = scale * np.array(from_pt[0:2]);
            #pt2 = scale * np.array(to_pt[0:2]);
            self.simBotWindow.show()
@@ -357,13 +384,14 @@ class Bot:
         self.simBotWindow.show()
         self.go_to_xyz(0,0,5);
         k = cv2.waitKey(1)
-        
+
     def __init__(self):
         self.debug = False
         self.queue = False
         self.x_max = 90 # cm
         self.y_max = 60
-        self.z_max = 10
+        # self.z_max = 10
+        self.z_max = 5
         self.x = 0
         self.y = 0
         self.z = 0
@@ -380,4 +408,3 @@ class Bot:
         self.host = ''
         self.port = ''
         self.use_socket_server = False
-
