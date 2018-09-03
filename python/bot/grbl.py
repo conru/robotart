@@ -81,9 +81,9 @@ class grbl:
 
     # always do homing on start.
     def home(self):
-        g.command('$H') # homing
+        self.command('$H') # homing
         print('(grbl) Homing...')
-        g.waitok(10) # wait for homing
+        self.waitok(10) # wait for homing
 
     def goto(self, x=None, y=None, z=None, f=None):
         # f means feedrate(mm/min)
@@ -97,13 +97,13 @@ class grbl:
         if y is not None: cmd += 'y{:1.2f} '.format(y)
         if z is not None: cmd += 'z{:1.2f} '.format(z)
 
-        g.command(cmd)
-        g.waitok(10)
+        self.command(cmd)
+        self.waitok(10)
 
     # obtain status word from machine
     def status_report(self):
-        g.command('?')
-        lines = g.wait('<', timeout=10, length=1)
+        self.command('?')
+        lines = self.wait('<', timeout=10, length=1)
         line = lines[-1]
         import re
         return re.match(r'\<(.*?)\|', line).group(1)
