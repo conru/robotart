@@ -97,10 +97,12 @@ class Bot:
         self.grbl = grbl()
 
     def sendCommandToBot(self, command, debug = False):
-        # via serial.
         if debug: print("SENDING",command,"TO BOT");
-        self.grbl.command_ok(command, timeout=10)
-        # send command and wait for ack
+
+        # send via serial only if serial connection established
+        if hasattr(self, 'grbl'):
+            self.grbl.command_ok(command, timeout=10)
+            # send command and wait for ack
 
         return 1
 
