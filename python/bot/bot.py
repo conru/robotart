@@ -93,7 +93,8 @@ class Bot:
     def startSerialPort(self):
         # start a serial client that connects to a controller board running
         # grbl v1.1 firmware.
-        from grbl import grbl
+        # from grbl import grbl
+        from cartman import bot as grbl
         self.grbl = grbl()
 
     def sendCommandToBot(self, command, debug = False):
