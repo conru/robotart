@@ -6,8 +6,8 @@ import time
 # import sys
 # sys.path.append('../library')
 #
-# from bot import Bot
-from cartman import bot as Bot
+from bot import Bot
+# from cartman import bot as Bot
 
 # where is the canvas
 canvas_location = [20, 5, .5] # cm upper/left corner is (0,0,0)
