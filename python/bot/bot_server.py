@@ -13,6 +13,8 @@ port = 9999
 debug = True
 
 server_bot = Bot()
+
+# uncomment next line if want to simulate the bot moving
 server_bot.openBotSimulation("Bot Server Simulation");
 
 class MyTCPSocketHandler(socketserver.BaseRequestHandler):

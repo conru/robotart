@@ -7,89 +7,7 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 
-// Class to send commands to robot via socket connection
-
-class Bot {
-protected:
-  int sockfd, portno, n;
-  struct sockaddr_in serv_addr;
-  struct hostent *server;
-  const char *host_name;
-  int port_number;
-  int debug;
-public:
-  int to_point() { return 3; }
-
-  int connect_to_socket() {
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-    if (sockfd < 0)  {
-      perror("ERROR opening socket");
-      return 0;
-    }
-
-    server = gethostbyname(host_name);
-
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr, 
-	  (char *)&serv_addr.sin_addr.s_addr,
-	  server->h_length);
-    serv_addr.sin_port = htons(port_number);
-
-    if (::connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
-      perror("ERROR connecting");
-      return 0;
-    }
-    return 1;
-  }
-
-  int send_to_socket(const char *text) {
-    int ok = connect_to_socket();
-    if (debug) printf("OK:%d\n", ok);
-    if (!ok) { return 0; }
-
-    if (sockfd < 0)  { 
-      printf("No socket connection\n");
-      return 0; 
-    }
-    ok = write(sockfd, text, strlen(text));
-    close(sockfd);
-    return ok;
-  }
-
-  int go_to_xyz(float x, float y, float z) {
-    char buf[50];
-    sprintf(buf,"GO X%f Y%f Z%f",x,y,z);
-    if (debug) printf("SENDING %s\n", buf);
-    return send_to_socket(buf);
-  }
-
-  int go_to_xy(float x, float y) {
-    return go_to_xyz(x,y,-1);
-  }
-
-  int go_to_z(float z) {
-    return go_to_xyz(-1, -1, z);
-  }
-
-  int set_speed(float cm_per_sec) {
-    char buf[50];
-    sprintf(buf,"SPEED V%f",cm_per_sec);
-    if (debug) printf("SENDING %s\n", buf);
-    return send_to_socket(buf);
-  }
-
-  void set_debug(int d) { debug = d; }
-
-  Bot(const char *host, int portno) {
-    host_name = host;
-    port_number = portno;
-    sockfd = -1;
-    debug = 0;
-  }
-};
-
+#include "bot.cpp"
 
 void error(const char *msg)
 {
@@ -99,18 +17,42 @@ void error(const char *msg)
 
 int main(int argc, char *argv[])
 {
-  Bot mybot("localhost", 9999);
-  mybot.set_debug(1);
+  PainterBot paintbot("localhost", 9999);
+  paintbot.set_debug(1);
 
-  mybot.set_speed(50); // cm/sec
+  Paint paint[3];
+  paint[0].set_location_up(100, 50, 5); // x, y, z (above paint) in cm
+  paint[0].set_location_down(100, 50, 10); // x, y, z (dipped in paint) in cm
+  paint[0].set_color(220,20,50); // b, g, r
+  paint[1].set_location_up(100, 100, 5); // x, y, z (above paint) in cm
+  paint[1].set_location_down(100, 100, 10); // x, y, z (dipped in paint) in cm
+  paint[1].set_color(90,220,50); // b, g, r
+  paint[2].set_location_up(100, 150, 5); // x, y, z (above paint) in cm
+  paint[2].set_location_down(100, 150, 10); // x, y, z (dipped in paint) in cm
+  paint[2].set_color(20,120,250); // b, g, r
 
-  for (int i=0; i<5; i++) {
-    mybot.go_to_xyz(10,10,3);
-    mybot.go_to_xyz(50,10,4);
-    mybot.go_to_xyz(50,50,5);
-    mybot.go_to_xyz(10,50,6);
+  paintbot.set_canvas_location(200, 50, .5);
+  paintbot.set_canvas_dimensions(400, 300); // mm
+  paintbot.open_draw_simulator();
+  for (int i=0; i<3; i++) { paintbot.add_simulate_paint_location(paint[i]); }
+
+  paintbot.set_max_speed(500); // mm/sec
+  paintbot.set_speed(300); // mm/sec
+  paintbot.set_pen_radius(8); // mm
+
+  for (int i=0; i<3; i++) {
+    paintbot.set_paint(paint[i]);
+    paintbot.get_paint();
+    paintbot.go_to_canvas_xy(10 + 30 * i,10 + 50 * i);
+    paintbot.pen_down();
+    paintbot.pause(30); // ms
+    paintbot.go_to_canvas_xy(50 + 30 * i,10 + 50 * i);
+    paintbot.go_to_canvas_xy(50 + 30 * i,50 + 50 * i);
+    paintbot.go_to_canvas_xy(10 + 30 * i,50 + 50 * i);
+    paintbot.go_to_canvas_xy(10 + 30 * i,10 + 50 * i);
+    paintbot.pen_up();
   }
 
-  mybot.go_to_z(3);
-
+  paintbot.go_to_z(30);
+  paintbot.go_to_xyz(100, 100, 30);
 }

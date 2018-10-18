@@ -55,7 +55,7 @@ class DrawWindow:
             self.line_type = 8 # 8 for solid antialiased line 
 
     def setLineThickness(self, thickness = 1):
-        self.pen_thickness = thickness
+        self.pen_thickness = int(max(1,thickness))
  
     def setPenColor(self, bgr):
         self.pen_color = bgr 

@@ -3,19 +3,19 @@
 import cv2
 import time
 
-# import sys
-# sys.path.append('../library')
+import sys
+sys.path.append('../library')
 #
 from bot import Bot
 # from cartman import bot as Bot
 
 # where is the canvas
-canvas_location = [20, 5, .5] # cm upper/left corner is (0,0,0)
-canvas_dimensions = [40, 30] # cm of canvas in x and y direction
+canvas_location = [200, 50, 5] # mm upper/left corner is (0,0,0)
+canvas_dimensions = [400, 300] # cm of canvas in x and y direction
 
 # where is the paint
-paint_location_up = [10, 25, 5] # x, y, z (above paint) in cm
-paint_location_down = [10, 25, 1] # x, y, z (dipped in paint) in cm
+paint_location_up = [100, 250, 50] # x, y, z (above paint) in mm
+paint_location_down = [100, 250, 10] # x, y, z (dipped in paint) in m
 
 # where is the input image
 filename = "images/pig.png"
@@ -23,10 +23,10 @@ filename = "images/pig.png"
 mybot = Bot()
 mybot.setCanvasLocation(canvas_location)
 mybot.setCanvasDimensions(canvas_dimensions)
-mybot.setPenRadius(0.8) # cm
+mybot.setPenRadius(8) # mm
 mybot.setPenColor([20,20,250]) # b, g, r
 mybot.setPenColor([220,20,50]) # b, g, r
-mybot.setMaxSpeed(20) # cm/sec
+mybot.setMaxSpeed(500) # mm/sec
 
 # if want to send commands to bot_server, set true.  otherwise, will
 # use_bot_server = False
@@ -61,7 +61,7 @@ if image is None:
    print("Unable to load: ", filename)
    exit(1)
 
-# calculate map between image pixels and canvas cm
+# calculate map between image pixels and canvas mm
 height, width = image.shape
 scale = min(canvas_dimensions) / max(height, width) # maps points on image to x,y of canvas
 #print("IMAGE: width:", width, "height:", height, " scale:", scale)

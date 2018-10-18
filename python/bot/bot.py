@@ -8,7 +8,7 @@ import socket, sys
 import socketserver
 
 from drawwindow import DrawWindow
-
+        
 class Bot:
 
     def print(self, newline = True):
@@ -55,9 +55,9 @@ class Bot:
         # if self.is_number(gx) and gx != -1 and gx <= self.x_max : self.x = gx
         # if self.is_number(gy) and gy != -1 and gy <= self.y_max : self.y = gy
         # if self.is_number(gz) and gz != -1 and gz <= self.z_max : self.z = gz
-        if gx is not None: self.x = gx
-        if gy is not None: self.y = gy
-        if gz is not None: self.z = gz
+        if gx is not None and gx != -1 and gx <= self.x_max: self.x = gx
+        if gy is not None and gy != -1 and gy <= self.y_max: self.y = gy
+        if gz is not None and gz != -1 and gz <= self.z_max: self.z = gz
 
         ########### TO DO ####################
         # the linear feed command is G1
@@ -72,6 +72,11 @@ class Bot:
            print("Moving to ", end='')
            self.print()
 
+    def doDwell(self, millisec):
+        self.doCommand("G4 P{ms:.3f}".format(ms = millisec))
+        if self.debug:
+           print("Sleeping for",millisec,'ms')
+           
     def home(self):
         self.doCommand('$H')
 
@@ -124,6 +129,76 @@ class Bot:
            #print("got SPEED:",speed);
            self.setMaxSpeed(speed)
 
+        p = re.compile("DWELL S([\.\d-]+)")
+        if (p.search(command)) :   # The result of this is referenced by variable name '_'
+           ms = float(p.search(command).group(1))
+           #print("got SPEED:",speed);
+           self.doDwell(ms)
+           
+        p = re.compile("PEN_RADIUS R([\.\d-]+)")
+        if (p.search(command)) :   # The result of this is referenced by variable name '_'
+           r = float(p.search(command).group(1))
+           print("got PEN RADIUS:",r);
+           self.setPenRadius(r);
+
+        p = re.compile("PEN_COLOR B([\d-]+) G([\d-]+) R([\d-]+)")
+        if (p.search(command)) :   # The result of this is referenced by variable name '_'
+           b = int(p.search(command).group(1))
+           g = int(p.search(command).group(2))
+           r = int(p.search(command).group(3))
+           print("got PEN COLOR:",r);
+           self.setPenColor([b,g,r])
+
+        # set dimensions of the canvas
+        p = re.compile("CANVAS_DIMENSION W([\.\d-]+) H([\.\d-]+)")
+        if (p.search(command)) :
+           w = float(p.search(command).group(1))
+           h = float(p.search(command).group(2))
+           self.setCanvasDimensions([w,h])
+           print("got CANVAS DIMENSION W:",w,"H:",h);
+
+        # set location of canvas
+        p = re.compile("CANVAS_LOCATION X([\.\d-]+) Y([\.\d-]+) Z([\.\d-]+)")
+        if (p.search(command)) :   # The result of this is referenced by variable name '_'
+           x = float(p.search(command).group(1))
+           y = float(p.search(command).group(2))
+           z = float(p.search(command).group(3))
+           self.setCanvasLocation([x,y,z])
+           print("got CANVAS_LOCATION X:",x,"Y:",y,"Z:",z);
+
+        # open the draw simulator
+        p = re.compile("OPEN_DRAW_SIMULATOR")
+        if (p.search(command)) :   # The result of this is referenced by variable name '_'
+           self.openDrawSimulation();
+           
+        p = re.compile("SIMULATE_PEN_DOWN")
+        if (p.search(command)) :   # The result of this is referenced by variable name '_'
+           self.simulatePenDown()
+           
+        p = re.compile("SIMULATE_PEN_UP")
+        if (p.search(command)) :   # The result of this is referenced by variable name '_'
+           self.simulatePenUp()
+           
+        # set location of canvas
+        p = re.compile("CANVAS_LOCATION X([\.\d-]+) Y([\.\d-]+) Z([\.\d-]+)")
+        if (p.search(command)) :   # The result of this is referenced by variable name '_'
+           x = float(p.search(command).group(1))
+           y = float(p.search(command).group(2))
+           z = float(p.search(command).group(3))
+           self.setCanvasLocation([x,y,z])
+           print("got CANVAS_LOCATION X:",x,"Y:",y,"Z:",z)
+           
+        # define locations for colors
+        p = re.compile("ADD_PAINT_LOCATION X([\.\d-]+) Y([\.\d-]+) B([\d-]+) G([\d-]+) R([\d-]+)")
+        if (self.simBot and p.search(command)) :  
+           x = float(p.search(command).group(1))
+           y = float(p.search(command).group(2))
+           b = int(p.search(command).group(3))
+           g = int(p.search(command).group(4))
+           r = int(p.search(command).group(5))
+           self.paintLocations.append([x,y,b,g,r]);
+           print("got ADD PAINT LOCATION")
+           
     def doCommand(self, command):
         if self.use_socket_server:
            self.sendToSocketServer(command)
@@ -172,6 +247,7 @@ class Bot:
         pt1 = self.simDrawWindowScale * (np.array(from_pt[0:2]) - np.array(self.canvasLocation)[0:2])
         pt2 = self.simDrawWindowScale * (np.array(to_pt[0:2]) - np.array(self.canvasLocation)[0:2])
         self.simDrawWindow.setPenColor(self.simulatePenColor)
+        self.simDrawWindow.setLineThickness(int(self.simulatePenRadius))
         self.simDrawWindow.drawLine(pt1,pt2)
         self.simDrawWindow.show()
         k = cv2.waitKey(1)
@@ -236,23 +312,23 @@ class Bot:
 
         off_x = 20 # to inside corner of box (pixels)
         off_y = 50
-        overhang = 2 # of bar (cm)
-        floor_to_bottom = 8 # (cm)
+        overhang = 20 # of bar (mm)
+        floor_to_bottom = 80 # (mm)
         floor_y = self.simBotWindow.height - 20
-        rail_w = 3
-        rail_d = 6
-        head_w = 8
-        head_h = 10
-        head_d = 10
-        pen_total_d = 12 # total length of pen/brush
-        pen_d = 5 # depth below base of head
-        pen_radius = self.simulatePenRadius # cm
+        rail_w = 30
+        rail_d = 60
+        head_w = 80
+        head_h = 100
+        head_d = 100
+        pen_total_d = 120 # total length of pen/brush
+        pen_d = 50 # depth below base of head
+        pen_radius = self.simulatePenRadius # mm
 
         inside_x = self.botDimensions[0] + rail_w + head_w
 
-        scale = self.simBotWindowScale # cm to pixels
+        scale = self.simBotWindowScale # mm to pixels
 
-        delta = 0.25 # how much to move per simulation (cm)
+        delta = 2.5 # how much to move per simulation (mm)
         distance = max(delta + 0.01, cv2.norm(from_pt, to_pt))
         steps = max(1,int(distance/delta))
         delta_time = delta / self.maxSpeed
@@ -283,6 +359,8 @@ class Bot:
               dw = int(self.simDrawWindow.width * scale / self.simDrawWindowScale)
               dh = int(self.simDrawWindow.height * scale / self.simDrawWindowScale)
               drawing_image = cv2.resize(self.simDrawWindow.getGrid(), (dw, dh));
+              #print("DW:",dw,"DH:",dh,'SDWW',self.simDrawWindow.width, 'SDWS',self.simDrawWindowScale, 'scale',scale);
+              
               self.simBotWindow.grid[cpy:cpy+drawing_image.shape[0], cpx:cpx+drawing_image.shape[1]] = drawing_image
 
               # draw canvas on side view
@@ -292,6 +370,21 @@ class Bot:
               pt2 = self.rotateSim(off_x + scale * (rail_w + head_w + cx + cw), floor_y)
               self.simBotWindow.drawRectangle(pt1, pt2, fill = True) # top
 
+           for i in range(len(self.paintLocations)):
+               paint = self.paintLocations[i]
+               paint_x = paint[0]
+               paint_y = paint[1]
+               self.simBotWindow.setPenColor([paint[2],paint[3],paint[4]]);
+               pt1 = self.rotateSim(off_x + scale * (head_w + paint_x), off_y + scale * paint_y)
+               self.simBotWindow.drawCircle(pt1, 10, fill = True) 
+
+           # draw workspace grid
+           self.simBotWindow.setPenColor([0,0,0])
+           self.simBotWindow.setLineThickness(1)
+           pt1 = self.rotateSim(off_x + scale * (head_w + 0) + 2, off_y + scale * 0 + 2)
+           pt2 = self.rotateSim(off_x + scale * (head_w + self.botDimensions[0]) - 2, off_y + scale * self.botDimensions[1] - 2)
+           self.simBotWindow.drawRectangle(pt1, pt2, fill = False) 
+               
            # draw top view of bot
            self.simBotWindow.setPenColor([180,180,180])
 
@@ -391,10 +484,10 @@ class Bot:
     def __init__(self):
         self.debug = False
         self.queue = False
-        self.x_max = 90 # cm
-        self.y_max = 60
+        self.x_max = 900 # mm
+        self.y_max = 600
         # self.z_max = 10
-        self.z_max = 5
+        self.z_max = 50
         self.x = 0
         self.y = 0
         self.z = 0
@@ -402,12 +495,13 @@ class Bot:
         self.canvasDimensions = -1
         self.canvasColor = [220,230,240]
         self.simulatePenColor = [0,0,0]
-        self.simulatePenRadius = 1.0 # cm
-        self.maxSpeed = 10 # cm/s
-        self.botDimensions = np.array([90,60,6])
+        self.simulatePenRadius = 10 # mm
+        self.maxSpeed = 10 # mm/s
+        self.botDimensions = np.array([900,600,60])
         self.simDraw = False
         self.simBot = False
         self.simPenDown = False
         self.host = ''
         self.port = ''
         self.use_socket_server = False
+        self.paintLocations = []
