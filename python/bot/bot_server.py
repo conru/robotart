@@ -38,8 +38,9 @@ class MyTCPSocketHandler(socketserver.BaseRequestHandler):
         time_spent = end_time - start_time
         elapsed_seconds = time_spent.total_seconds()
         print("COMMAND",command,"TIME:",elapsed_seconds)
-		# send result
-        #self.request.sendall(bytes(res + "\n", 'utf8'))
+        
+	# send result
+        self.request.sendall(bytes(res + "\n", 'utf8'))
         
 
 if __name__ == "__main__":

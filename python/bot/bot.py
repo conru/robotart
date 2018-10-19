@@ -104,13 +104,13 @@ class Bot:
 
     def sendCommandToBot(self, command, debug = False):
         if debug: print("SENDING",command,"TO BOT");
-
+        ret = 0
         # send via serial only if serial connection established
         if hasattr(self, 'grbl'):
-            self.grbl.command_ok(command, timeout=10)
+            ret = self.grbl.command_ok(command, timeout=10)
             # send command and wait for ack
 
-        return 1
+        return ret
 
     def processServerCommand(self, command, debug = False):
         print("PROC:",command)
@@ -121,25 +121,25 @@ class Bot:
            y = float(p.search(command).group(2))
            z = float(p.search(command).group(3))
            #print("got X:",x,"Y:",y,"Z:",z);
-           self.go_to_xyz(x,y,z)
+           return self.go_to_xyz(x,y,z)
 
         p = re.compile("SPEED V([\.\d-]+)")
         if (p.search(command)) :   # The result of this is referenced by variable name '_'
            speed = float(p.search(command).group(1))
            #print("got SPEED:",speed);
-           self.setMaxSpeed(speed)
+           return self.setMaxSpeed(speed)
 
         p = re.compile("DWELL S([\.\d-]+)")
         if (p.search(command)) :   # The result of this is referenced by variable name '_'
            ms = float(p.search(command).group(1))
            #print("got SPEED:",speed);
-           self.doDwell(ms)
+           return self.doDwell(ms)
            
         p = re.compile("PEN_RADIUS R([\.\d-]+)")
         if (p.search(command)) :   # The result of this is referenced by variable name '_'
            r = float(p.search(command).group(1))
            print("got PEN RADIUS:",r);
-           self.setPenRadius(r);
+           return self.setPenRadius(r);
 
         p = re.compile("PEN_COLOR B([\d-]+) G([\d-]+) R([\d-]+)")
         if (p.search(command)) :   # The result of this is referenced by variable name '_'
@@ -147,15 +147,15 @@ class Bot:
            g = int(p.search(command).group(2))
            r = int(p.search(command).group(3))
            print("got PEN COLOR:",r);
-           self.setPenColor([b,g,r])
+           return self.setPenColor([b,g,r])
 
         # set dimensions of the canvas
         p = re.compile("CANVAS_DIMENSION W([\.\d-]+) H([\.\d-]+)")
         if (p.search(command)) :
            w = float(p.search(command).group(1))
            h = float(p.search(command).group(2))
-           self.setCanvasDimensions([w,h])
            print("got CANVAS DIMENSION W:",w,"H:",h);
+           return self.setCanvasDimensions([w,h])
 
         # set location of canvas
         p = re.compile("CANVAS_LOCATION X([\.\d-]+) Y([\.\d-]+) Z([\.\d-]+)")
@@ -163,30 +163,34 @@ class Bot:
            x = float(p.search(command).group(1))
            y = float(p.search(command).group(2))
            z = float(p.search(command).group(3))
-           self.setCanvasLocation([x,y,z])
            print("got CANVAS_LOCATION X:",x,"Y:",y,"Z:",z);
+           return self.setCanvasLocation([x,y,z])
 
         # open the draw simulator
         p = re.compile("OPEN_DRAW_SIMULATOR")
         if (p.search(command)) :   # The result of this is referenced by variable name '_'
-           self.openDrawSimulation();
+           return self.openDrawSimulation();
            
         p = re.compile("SIMULATE_PEN_DOWN")
         if (p.search(command)) :   # The result of this is referenced by variable name '_'
-           self.simulatePenDown()
+           return self.simulatePenDown()
            
+        p = re.compile("IS_IDLE")
+        if (p.search(command)) :   # The result of this is referenced by variable name '_'
+           return self.isIdle();
+
         p = re.compile("SIMULATE_PEN_UP")
         if (p.search(command)) :   # The result of this is referenced by variable name '_'
-           self.simulatePenUp()
-           
+           return self.simulatePenUp()
+
         # set location of canvas
         p = re.compile("CANVAS_LOCATION X([\.\d-]+) Y([\.\d-]+) Z([\.\d-]+)")
         if (p.search(command)) :   # The result of this is referenced by variable name '_'
            x = float(p.search(command).group(1))
            y = float(p.search(command).group(2))
            z = float(p.search(command).group(3))
-           self.setCanvasLocation([x,y,z])
            print("got CANVAS_LOCATION X:",x,"Y:",y,"Z:",z)
+           return self.setCanvasLocation([x,y,z])
            
         # define locations for colors
         p = re.compile("ADD_PAINT_LOCATION X([\.\d-]+) Y([\.\d-]+) B([\d-]+) G([\d-]+) R([\d-]+)")
@@ -196,8 +200,8 @@ class Bot:
            b = int(p.search(command).group(3))
            g = int(p.search(command).group(4))
            r = int(p.search(command).group(5))
-           self.paintLocations.append([x,y,b,g,r]);
            print("got ADD PAINT LOCATION")
+           return self.paintLocations.append([x,y,b,g,r]);
            
     def doCommand(self, command):
         if self.use_socket_server:

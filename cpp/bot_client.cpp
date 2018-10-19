@@ -9,6 +9,8 @@
 
 #include "bot.cpp"
 
+// for this program to work, you must first run 'python3 bot_server.py' with localhost:9999
+
 void error(const char *msg)
 {
   perror(msg);
