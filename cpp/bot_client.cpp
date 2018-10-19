@@ -42,6 +42,10 @@ int main(int argc, char *argv[])
   paintbot.set_speed(300); // mm/sec
   paintbot.set_pen_radius(8); // mm
 
+  // just test the is_idle() command
+  int idle = paintbot.is_idle();
+  printf("IS IDLE: %d\n", idle);
+
   for (int i=0; i<3; i++) {
     paintbot.set_paint(paint[i]);
     paintbot.get_paint();

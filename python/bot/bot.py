@@ -177,7 +177,7 @@ class Bot:
            
         p = re.compile("IS_IDLE")
         if (p.search(command)) :   # The result of this is referenced by variable name '_'
-           return self.isIdle();
+           return self.grbl.is_idle();
 
         p = re.compile("SIMULATE_PEN_UP")
         if (p.search(command)) :   # The result of this is referenced by variable name '_'
