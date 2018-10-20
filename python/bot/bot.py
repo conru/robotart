@@ -34,9 +34,7 @@ class Bot:
            gy = y
         self.go_to_xyz(gx, gy, None)
 
-    def go_to_xyz(self, x=None, y=None, z=None):
-        # Qin: don't use -1, use None.
-
+    def go_to_xyz(self, x=None, y=None, z=None, skip_bot = 0):
         if (isinstance(x,list)):
            gx = x[0]
            gy = x[1]
@@ -50,18 +48,16 @@ class Bot:
 
         # Qin: software limits are implemented in grbl firmware,
         # no need to code.
+        # ABC: put back to have 2nd layer protection 
         # modified here to skip the unreasonable min/max limits.
-
-        # if self.is_number(gx) and gx != -1 and gx <= self.x_max : self.x = gx
-        # if self.is_number(gy) and gy != -1 and gy <= self.y_max : self.y = gy
-        # if self.is_number(gz) and gz != -1 and gz <= self.z_max : self.z = gz
-        if gx is not None and gx != -1 and gx <= self.x_max: self.x = gx
-        if gy is not None and gy != -1 and gy <= self.y_max: self.y = gy
-        if gz is not None and gz != -1 and gz <= self.z_max: self.z = gz
+        if gx is not None and gx <= self.x_max: self.x = gx
+        if gy is not None and gy <= self.y_max: self.y = gy
+        if gz is not None and gz <= self.z_max: self.z = gz
 
         ########### TO DO ####################
         # the linear feed command is G1
-        self.doCommand("G1 X{x:.3f} Y{y:.3f} Z{z:.3f}".format(x = self.x, y = self.y, z = self.z))
+        if not skip_bot:
+           self.doCommand("G1 X{x:.3f} Y{y:.3f} Z{z:.3f}".format(x = self.x, y = self.y, z = self.z))
 
         if self.simDraw and self.simPenDown:
            self.doSimulateDraw(orig_location, (self.x, self.y, self.z))
@@ -73,7 +69,7 @@ class Bot:
            self.print()
 
     def doDwell(self, millisec):
-        self.doCommand("G4 P{ms:.3f}".format(ms = millisec))
+        self.doCommand("G4 S{ms:.3f}".format(ms = millisec))
         if self.debug:
            print("Sleeping for",millisec,'ms')
            
@@ -83,6 +79,12 @@ class Bot:
     def setSpeed(self,s): # mm/min
         self.doCommand('G1 F{:1.3f}'.format(s))
 
+    def init(self):
+        self.setSpeed(5000) # mm/sec
+        if self.debug:
+            print('homing')
+        self.home()
+        
     def is_number(self, n):
         is_number = True
         try:
@@ -175,9 +177,9 @@ class Bot:
         if (p.search(command)) :   # The result of this is referenced by variable name '_'
            return self.simulatePenDown()
            
-        p = re.compile("IS_IDLE")
-        if (p.search(command)) :   # The result of this is referenced by variable name '_'
-           return self.grbl.is_idle();
+        #p = re.compile("IS_IDLE")
+        #if (p.search(command)) :   # The result of this is referenced by variable name '_'
+           #return self.grbl.is_idle()
 
         p = re.compile("SIMULATE_PEN_UP")
         if (p.search(command)) :   # The result of this is referenced by variable name '_'
@@ -482,7 +484,7 @@ class Bot:
         self.simBotWindow.setPenColor([0,0,0])
         self.simBotWindow.drawBorder()
         self.simBotWindow.show()
-        self.go_to_xyz(0,0,5);
+        self.go_to_xyz(0,0,5,1); # the extra term ensures no moving physical arm
         k = cv2.waitKey(1)
 
     def __init__(self):

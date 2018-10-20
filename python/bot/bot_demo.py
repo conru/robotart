@@ -50,6 +50,7 @@ elif 'serve' in mode:
     mybot.setHostPort("localhost",9999)
 elif 'serial' in mode:
     mybot.startSerialPort()
+    is_idle = mybot.isIdle()
 
 # branch on debugness
 print('Debug:', args.debug)
@@ -76,12 +77,11 @@ floor = canvas_location[2]
 above_floor = floor + 10
 
 # speed shorthands
-fast = 50000
-slow = 2000
+fast = 50000 # mm/minute
+slow = 2000 # mm/minute
 
 # always home on init
-print('homing')
-mybot.home()
+mybot.init()
 
 print ("going to paint", len(contours), "lines")
 

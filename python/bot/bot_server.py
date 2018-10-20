@@ -14,6 +14,10 @@ debug = True
 
 server_bot = Bot()
 
+# connect to the physical bot, comment out if only want simulation
+server_bot.startSerialPort() 
+server_bot.init()
+
 # uncomment next line if want to simulate the bot moving
 server_bot.openBotSimulation("Bot Server Simulation");
 
@@ -40,7 +44,7 @@ class MyTCPSocketHandler(socketserver.BaseRequestHandler):
         print("COMMAND",command,"TIME:",elapsed_seconds)
         
 	# send result
-        self.request.sendall(bytes(res + "\n", 'utf8'))
+        #self.request.sendall(bytes(res + "\n", 'utf8'))
         
 
 if __name__ == "__main__":
