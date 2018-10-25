@@ -17,6 +17,9 @@ server_bot = Bot()
 # connect to the physical bot, comment out if only want simulation
 server_bot.startSerialPort() 
 server_bot.init()
+#server_bot.setDebug(True)
+server_bot.setFlipXY(True)
+server_bot.setZUpFromFloor(True)
 
 # uncomment next line if want to simulate the bot moving
 server_bot.openBotSimulation("Bot Server Simulation");

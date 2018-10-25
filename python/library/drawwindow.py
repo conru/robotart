@@ -19,7 +19,14 @@ class DrawWindow:
     def copy(self, W):
         self.grid = W.grid.clone()
 
-	# copies pixels of W that are NOT r,g,b
+    # returns a region of interest
+    def getROI(x,y,w,h):
+        if (x + w > self.width): w = self.width - x
+        if (y + h > self.height): h = self.height - y
+        border = self.border
+        return self.grid[y+border:y + h + border, x+border:x + w + border]
+        
+    # copies pixels of W that are NOT r,g,b
     def overlay(self, W, outline = False, r = 0, g = 0, b = 0):
         min_width = min(W.width, self.width)
         min_height = min(W.height, self.height)
